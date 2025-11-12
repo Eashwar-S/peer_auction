@@ -1,0 +1,46 @@
+NAME: gdb.27
+NUMBER OF VERTICES: 11
+NUMBER OF EDGES: 33
+NUMBER OF REQUIRED_EDGES: 17
+NUMBER OF NON_REQUIRED_EDGES: 16
+VEHICLE CAPACITY: 18
+NUMBER OF VEHICLES: 2
+RECHARGE TIME: 36
+LIST_REQUIRED_EDGES:
+DEPOT: 1,2
+(1,2) edge weight 1.0
+(1,3) edge weight 7.0
+(1,9) edge weight 4.0
+(1,11) edge weight 1.0
+(2,5) edge weight 4.0
+(2,8) edge weight 1.0
+(3,6) edge weight 9.0
+(4,9) edge weight 8.0
+(7,8) edge weight 3.0
+(7,11) edge weight 2.0
+(8,10) edge weight 1.0
+(1,5) edge weight 8.0
+(1,6) edge weight 6.0
+(1,7) edge weight 3.0
+(1,8) edge weight 2.0
+(1,10) edge weight 2.0
+(2,3) edge weight 1.0
+LIST_NON_REQUIRED_EDGES:
+(2,4) edge weight 2.0
+(2,6) edge weight 4.0
+(2,9) edge weight 6.0
+(3,5) edge weight 6.0
+(3,10) edge weight 3.0
+(3,11) edge weight 6.0
+(4,7) edge weight 8.0
+(4,8) edge weight 9.0
+(5,7) edge weight 4.0
+(6,7) edge weight 8.0
+(6,9) edge weight 4.0
+(6,10) edge weight 7.0
+(6,11) edge weight 3.0
+(7,9) edge weight 6.0
+(7,10) edge weight 3.0
+(9,10) edge weight 7.0
+FAILURE_SCENARIO:
+Vehicle 2 will fail in 38 time units.

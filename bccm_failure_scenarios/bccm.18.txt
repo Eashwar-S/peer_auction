@@ -1,0 +1,63 @@
+NAME: bccm.18
+NUMBER OF VERTICES: 31
+NUMBER OF EDGES: 50
+NUMBER OF REQUIRED_EDGES: 25
+NUMBER OF NON_REQUIRED_EDGES: 25
+VEHICLE CAPACITY: 20
+NUMBER OF VEHICLES: 4
+RECHARGE TIME: 40
+LIST_REQUIRED_EDGES:
+DEPOT: 5,9,12,19
+(9,13) edge weight 6.0
+(10,16) edge weight 2.0
+(26,27) edge weight 1.0
+(18,19) edge weight 5.0
+(23,25) edge weight 3.0
+(2,3) edge weight 1.0
+(1,31) edge weight 3.0
+(23,26) edge weight 2.0
+(5,6) edge weight 3.0
+(3,9) edge weight 2.0
+(13,19) edge weight 6.0
+(4,13) edge weight 3.0
+(13,12) edge weight 4.0
+(10,11) edge weight 4.0
+(25,28) edge weight 5.0
+(1,2) edge weight 2.0
+(1,7) edge weight 10.0
+(1,30) edge weight 4.0
+(2,8) edge weight 6.0
+(7,6) edge weight 3.0
+(7,8) edge weight 3.0
+(30,29) edge weight 7.0
+(31,5) edge weight 1.0
+(31,6) edge weight 3.0
+(31,28) edge weight 3.0
+LIST_NON_REQUIRED_EDGES:
+(31,29) edge weight 2.0
+(3,4) edge weight 5.0
+(8,9) edge weight 7.0
+(8,12) edge weight 8.0
+(4,9) edge weight 9.0
+(5,10) edge weight 4.0
+(6,11) edge weight 2.0
+(10,14) edge weight 1.0
+(11,12) edge weight 5.0
+(11,17) edge weight 4.0
+(12,18) edge weight 5.0
+(14,15) edge weight 5.0
+(16,15) edge weight 3.0
+(16,17) edge weight 2.0
+(18,21) edge weight 3.0
+(19,20) edge weight 4.0
+(19,21) edge weight 3.0
+(19,22) edge weight 2.0
+(21,22) edge weight 4.0
+(20,22) edge weight 5.0
+(23,24) edge weight 3.0
+(24,27) edge weight 2.0
+(26,28) edge weight 5.0
+(27,29) edge weight 2.0
+(28,29) edge weight 3.0
+FAILURE_SCENARIO:
+Vehicle 2 will fail in 39 time units.
