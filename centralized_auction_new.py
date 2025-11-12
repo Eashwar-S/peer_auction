@@ -539,9 +539,115 @@ def local_repair(G, depot_nodes, vehicle_capacity, req_edges, dist, start_depot)
 #     pass
     # return best[0], best[1], vehicle_trip_indexes
 
+# def build_expanded_combinations(mu_veh, receivers, vehicle_routes, vehicle_trip_indexes,
+#                                 max_b=3, max_per_receiver=32):
+#     combos = []  # (donor, recv, donor_trip_idxs, recv_trip_idxs), ABS indices; frozen respected
+#     n = len(vehicle_routes)
+
+#     def editable(v):
+#         idx = vehicle_trip_indexes[v] if v < len(vehicle_trip_indexes) else -1
+#         start = 0 if (idx is None or idx < 0) else idx + 1
+#         return list(range(start, len(vehicle_routes[v])))
+
+#     d_edit = editable(mu_veh)
+#     if not d_edit:
+#         return combos
+
+#     # tail windows from donor/receiver: contiguous suffixes only
+#     def tail_windows(idxs, max_b):
+#         out = []
+#         b = min(max_b, len(idxs))
+#         for k in range(1, b + 1):
+#             out.append(idxs[-k:])   # last k
+#         return out
+
+#     d_ws = tail_windows(d_edit, max_b)
+
+#     for r in receivers:
+#         r_edit = editable(r)
+#         r_ws = tail_windows(r_edit, max_b) if r_edit else []
+#         seen = set()
+
+#         # swaps: all pairings of donor/receiver tail windows (unequal sizes allowed)
+#         for d_sub in d_ws:
+#             if r_ws:
+#                 for r_sub in r_ws:
+#                     tup = (mu_veh, r, tuple(d_sub), tuple(r_sub))
+#                     if tup not in seen:
+#                         combos.append((mu_veh, r, d_sub, r_sub))
+#                         seen.add(tup)
+#                         if len(seen) >= max_per_receiver: break
+#             # relocate variants (receiver empty)
+#             tup = (mu_veh, r, tuple(d_sub), ())
+#             if tup not in seen:
+#                 combos.append((mu_veh, r, d_sub, []))
+#                 seen.add(tup)
+#                 if len(seen) >= max_per_receiver: pass
+#         # optional: also try relocating two-at-once if donor has ≥2 tail windows already included above
+
+#     return combos
+
+# def build_expanded_combinations(mu_veh, receivers, vehicle_routes, vehicle_trip_indexes,
+#                                 vehicle_trip_times, max_b=3, max_per_receiver=32):
+#     combos = []
+#     n = len(vehicle_routes)
+
+#     def editable(v):
+#         idx = vehicle_trip_indexes[v] if v < len(vehicle_trip_indexes) else -1
+#         start = 0 if (idx is None or idx < 0) else idx + 1
+#         return list(range(start, len(vehicle_routes[v])))
+
+#     def tail_windows(idxs, max_b):
+#         out = []
+#         b = min(max_b, len(idxs))
+#         for k in range(1, b + 1):
+#             out.append(idxs[-k:])
+#         return out
+
+#     totals = [
+#         (i, sum(vehicle_trip_times[i]) if i < len(vehicle_trip_times) and vehicle_trip_times[i] else 0.0)
+#         for i in range(n)
+#     ]
+#     totals.sort(key=lambda x: x[1], reverse=True)
+
+#     donors = [mu_veh]
+#     for d, _ in totals:
+#         if d != mu_veh:# and len(donors) < 3:
+#             donors.append(d)
+
+#     for d in donors:
+#         d_edit = editable(d)
+#         if not d_edit:
+#             continue
+#         d_ws = tail_windows(d_edit, max_b)
+
+#         for r in receivers:
+#             if r == d:
+#                 continue
+#             r_edit = editable(r)
+#             r_ws = tail_windows(r_edit, max_b) if r_edit else []
+#             seen = set()
+
+#             for d_sub in d_ws:
+#                 if r_ws:
+#                     for r_sub in r_ws:
+#                         tup = (d, r, tuple(d_sub), tuple(r_sub))
+#                         if tup not in seen:
+#                             combos.append((d, r, d_sub, r_sub))
+#                             seen.add(tup)
+#                             if len(seen) >= max_per_receiver:
+#                                 break
+#                 tup = (d, r, tuple(d_sub), ())
+#                 if tup not in seen and len(seen) < max_per_receiver:
+#                     combos.append((d, r, d_sub, []))
+#                     seen.add(tup)
+
+#     return combos
+
+# version 3
 def build_expanded_combinations(mu_veh, receivers, vehicle_routes, vehicle_trip_indexes,
-                                max_b=3, max_per_receiver=32):
-    combos = []  # (donor, recv, donor_trip_idxs, recv_trip_idxs), ABS indices; frozen respected
+                                vehicle_trip_times, max_b=3, max_per_receiver=32):
+    combos = []
     n = len(vehicle_routes)
 
     def editable(v):
@@ -549,41 +655,52 @@ def build_expanded_combinations(mu_veh, receivers, vehicle_routes, vehicle_trip_
         start = 0 if (idx is None or idx < 0) else idx + 1
         return list(range(start, len(vehicle_routes[v])))
 
-    d_edit = editable(mu_veh)
-    if not d_edit:
-        return combos
-
-    # tail windows from donor/receiver: contiguous suffixes only
-    def tail_windows(idxs, max_b):
+    def all_windows(idxs, max_b):
         out = []
-        b = min(max_b, len(idxs))
-        for k in range(1, b + 1):
-            out.append(idxs[-k:])   # last k
+        L = len(idxs)
+        b = min(max_b, L)
+        for length in range(1, b + 1):
+            for start in range(0, L - length + 1):
+                out.append(idxs[start:start + length])
         return out
 
-    d_ws = tail_windows(d_edit, max_b)
+    totals = [
+        (i, sum(vehicle_trip_times[i]) if i < len(vehicle_trip_times) and vehicle_trip_times[i] else 0.0)
+        for i in range(n)
+    ]
+    totals.sort(key=lambda x: x[1], reverse=True)
 
-    for r in receivers:
-        r_edit = editable(r)
-        r_ws = tail_windows(r_edit, max_b) if r_edit else []
-        seen = set()
+    donors = [mu_veh]
+    for d, _ in totals:
+        if d != mu_veh and len(donors) < 3:
+            donors.append(d)
 
-        # swaps: all pairings of donor/receiver tail windows (unequal sizes allowed)
-        for d_sub in d_ws:
-            if r_ws:
-                for r_sub in r_ws:
-                    tup = (mu_veh, r, tuple(d_sub), tuple(r_sub))
-                    if tup not in seen:
-                        combos.append((mu_veh, r, d_sub, r_sub))
-                        seen.add(tup)
-                        if len(seen) >= max_per_receiver: break
-            # relocate variants (receiver empty)
-            tup = (mu_veh, r, tuple(d_sub), ())
-            if tup not in seen:
-                combos.append((mu_veh, r, d_sub, []))
-                seen.add(tup)
-                if len(seen) >= max_per_receiver: pass
-        # optional: also try relocating two-at-once if donor has ≥2 tail windows already included above
+    for d in donors:
+        d_edit = editable(d)
+        if not d_edit:
+            continue
+        d_ws = all_windows(d_edit, max_b)
+
+        for r in receivers:
+            if r == d:
+                continue
+            r_edit = editable(r)
+            r_ws = all_windows(r_edit, max_b) if r_edit else []
+            seen = set()
+
+            for d_sub in d_ws:
+                if r_ws:
+                    for r_sub in r_ws:
+                        tup = (d, r, tuple(d_sub), tuple(r_sub))
+                        if tup not in seen:
+                            combos.append((d, r, d_sub, r_sub))
+                            seen.add(tup)
+                            if len(seen) >= max_per_receiver:
+                                break
+                tup = (d, r, tuple(d_sub), ())
+                if tup not in seen and len(seen) < max_per_receiver:
+                    combos.append((d, r, d_sub, []))
+                    seen.add(tup)
 
     return combos
 
@@ -625,7 +742,12 @@ def peer_auction(G, vehicle_routes, vehicle_trip_times, vehicle_trip_indexes,
     #     else:
     #         combinations.append((mu_veh, r, d_edit[-m:], r_edit[-m:]))
 
-    combinations = build_expanded_combinations(mu_veh, receivers, vehicle_routes, vehicle_trip_indexes,
+    # version 1
+    # combinations = build_expanded_combinations(mu_veh, receivers, vehicle_routes, vehicle_trip_indexes,
+    #                             max_b=3, max_per_receiver=32)
+    
+    # version 2
+    combinations = build_expanded_combinations(mu_veh, receivers, vehicle_routes, vehicle_trip_indexes, vehicle_trip_times,
                                 max_b=3, max_per_receiver=32)
     if not combinations: return vehicle_routes, vehicle_trip_times, vehicle_trip_indexes, 0
     
@@ -680,7 +802,10 @@ def peer_auction(G, vehicle_routes, vehicle_trip_times, vehicle_trip_indexes,
         vt[recv_idx]  = r_prefix_times  + r_suffix_times
 
         new_makespan = max(_finish_time(vt[v], recharge_time) for v in range(n))
+        print(f'vehicle routes - {vr}')
+        print(f'vehicle route times - {vt}')
         print(f'new makespan - {new_makespan}')
+        print()
         delta = new_makespan - base_makespan
         if delta < best_delta:
             best_delta = delta
@@ -705,7 +830,11 @@ def peer_auction_rounds(G, vehicle_routes, vehicle_trip_times, vehicle_trip_inde
     routes = copy.deepcopy(vehicle_routes)
     times  = copy.deepcopy(vehicle_trip_times)
     idxes  = list(vehicle_trip_indexes)
-    for _ in range(max_rounds):
+    for r in range(max_rounds):
+        print(f"------ Round {r+1} ----------")
+        print(f'vehicle routes - {routes}')
+        print(f'vehicle route times - {times}')
+        print(f'vehicle trip index - {idxes}')
         routes2, times2, idxes2, delta = peer_auction(
             G, routes, times, idxes, depot_nodes, req_edges, dist,
             vehicle_capacity, recharge_time, failure_history, eps=eps
@@ -868,11 +997,16 @@ def simulate_1(save_results_to_csv=False):
                     print(f"Updated Trip Times  -  {vehicle_trip_times}")
                     print(f'After centralized auction Vehicle trip indexes - {vehicle_trip_index}')
                     print(f'failure history - {failure_history}')
+                    mission_time = round(max([sum(vehicle_trip_times[k]) + (len(vehicle_trip_times[k]) - 1) * recharge_time +
+                                             sum(idle_time[k].values()) for k in range(len(vehicle_routes))]), 1)
+                    
+                    print(f"Mission time extended to {mission_time} time units.")
+                    print()
 
                     print()
                     print('###### Peer auction development ######')
                     # peer_auction(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index, depot_nodes, required_edges, dist, vehicle_capacity, recharge_time, failure_history)
-                    peer_auction_rounds(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index,
+                    vehicle_routes, vehicle_trip_times, _ = peer_auction_rounds(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index,
                         depot_nodes, required_edges, dist, vehicle_capacity, recharge_time, failure_history,
                         max_rounds=10, eps=1e-6)
                     print()
@@ -938,7 +1072,7 @@ def simulate_2(save_results_to_csv=False):
         scenario_num = file.split('.')[1]  # Extract scenario number from bccm.X.txt
         
         
-        if int(scenario_num) == 1:  # Process only scenario 1 for testing
+        if True:#int(scenario_num) == 5:  # Process only scenario 1 for testing
             print(f'Running BCCM scenario {scenario_num}')
             # print(f'Running BCCM scenario {scenario_num}')
             
@@ -1060,9 +1194,13 @@ def simulate_2(save_results_to_csv=False):
                     print()
                     print('###### Peer auction development ######')
                     # peer_auction(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index, depot_nodes, required_edges, dist, vehicle_capacity, recharge_time, failure_history)
-                    peer_auction_rounds(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index,
+                    vehicle_routes, vehicle_trip_times, _ = peer_auction_rounds(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index,
                         depot_nodes, required_edges, dist, vehicle_capacity, recharge_time, failure_history,
                         max_rounds=5, eps=1e-6)
+                    
+                    mission_time = round(max([sum(vehicle_trip_times[k]) + (len(vehicle_trip_times[k]) - 1) * recharge_time +
+                                             sum(idle_time[k].values()) for k in range(len(vehicle_routes))]), 1)
+                    print(f'mission time - {mission_time}')
                     print()
                     
                     
@@ -1082,7 +1220,7 @@ def simulate_2(save_results_to_csv=False):
             print("Final Routes Information")
             print(f"Final Solution Routes  -  {vehicle_routes}")
             print(f"Final Solution Trip Times  -  {vehicle_trip_times}")
-            # print(f'Final mission time - {mission_time}')
+            print(f'Final mission time - {mission_time}')
             # print("----------")
             
             total_idle_time = sum(sum(idle_time[k].values()) for k in range(len(vehicle_routes)))
@@ -1096,7 +1234,7 @@ def simulate_2(save_results_to_csv=False):
             
             if save_results_to_csv:
                 df = pd.DataFrame(instanceData)
-                df.to_csv(f"{p}/results/instances_results_with_failure/centralized_auction_algorithm_bccm_new.csv", index=True)
+                df.to_csv(f"{p}/results/centralized_auction_algorithm_bccm_new.csv", index=True)
             # print()
             # print()
 
@@ -1272,6 +1410,6 @@ def simulate_3(save_results_to_csv=False):
                 # print()
 
 if __name__ == "__main__":
-    simulate_1(save_results_to_csv=False)
-    # simulate_2(save_results_to_csv=False)
+    # simulate_1(save_results_to_csv=False)
+    simulate_2(save_results_to_csv=True)
     # simulate_3(save_results_to_csv=True)
