@@ -8,6 +8,8 @@ import os
 import pandas as pd
 import copy
 import re
+import sys
+import argparse
 from demo_updated_tuning_capacity_grok_v10 import MagneticFieldRouter
 plt.rcParams["figure.dpi"] = 300
 
@@ -751,7 +753,7 @@ def peer_auction(G, vehicle_routes, vehicle_trip_times, vehicle_trip_indexes,
                                 max_b=3, max_per_receiver=32)
     if not combinations: return vehicle_routes, vehicle_trip_times, vehicle_trip_indexes, 0
     
-    print(f'combinations - {combinations}')
+    # print(f'combinations - {combinations}')
     # edge ownership only on editable suffix; frozen prefix is untouchable
     def owned_suffix_edges(v):
         idxs = editable_indices(v)
@@ -802,25 +804,25 @@ def peer_auction(G, vehicle_routes, vehicle_trip_times, vehicle_trip_indexes,
         vt[recv_idx]  = r_prefix_times  + r_suffix_times
 
         new_makespan = max(_finish_time(vt[v], recharge_time) for v in range(n))
-        print(f'vehicle routes - {vr}')
-        print(f'vehicle route times - {vt}')
-        print(f'new makespan - {new_makespan}')
-        print()
+        # print(f'vehicle routes - {vr}')
+        # print(f'vehicle route times - {vt}')
+        # print(f'new makespan - {new_makespan}')
+        # print()
         delta = new_makespan - base_makespan
         if delta < best_delta:
             best_delta = delta
             best = (vr, vt)
 
     if best is None: 
-        print(f'No improvement')
+        # print(f'No improvement')
         return vehicle_routes, vehicle_trip_times, vehicle_trip_indexes, best_delta
     else:
-        print(f'Improvement obtained')
-        print(f'vehicle routes - {best[0]}')
-        print(f'vehicle route times - {best[1]}')
-        print(f'vehicle trip index - {vehicle_trip_indexes}')
+        # print(f'Improvement obtained')
+        # print(f'vehicle routes - {best[0]}')
+        # print(f'vehicle route times - {best[1]}')
+        # print(f'vehicle trip index - {vehicle_trip_indexes}')
         mt = round(max([sum(best[1][k]) + (len(best[1][k]) - 1) * recharge_time for k in range(n)]), 1)
-        print(f'peer auction mission time - {mt}')
+        # print(f'peer auction mission time - {mt}')
     # pass
     return best[0], best[1], vehicle_trip_indexes, best_delta
 
@@ -831,23 +833,23 @@ def peer_auction_rounds(G, vehicle_routes, vehicle_trip_times, vehicle_trip_inde
     times  = copy.deepcopy(vehicle_trip_times)
     idxes  = list(vehicle_trip_indexes)
     for r in range(max_rounds):
-        print(f"------ Round {r+1} ----------")
-        print(f'vehicle routes - {routes}')
-        print(f'vehicle route times - {times}')
-        print(f'vehicle trip index - {idxes}')
+        # print(f"------ Round {r+1} ----------")
+        # print(f'vehicle routes - {routes}')
+        # print(f'vehicle route times - {times}')
+        # print(f'vehicle trip index - {idxes}')
         routes2, times2, idxes2, delta = peer_auction(
             G, routes, times, idxes, depot_nodes, req_edges, dist,
             vehicle_capacity, recharge_time, failure_history, eps=eps
         )
         if delta >= -eps:  # no improvement
             break
-        print(f'Improvement obtained')
-        print(f'vehicle routes - {routes2}')
-        print(f'vehicle route times - {times2}')
-        print(f'vehicle trip index - {idxes2}')
+        # print(f'Improvement obtained')
+        # print(f'vehicle routes - {routes2}')
+        # print(f'vehicle route times - {times2}')
+        # print(f'vehicle trip index - {idxes2}')
         mt = round(max(sum(times2[k]) + (len(times2[k]) - 1) * recharge_time for k in range(len(routes2))), 1)
-        print(f'peer auction mission time - {mt}')
-        print(f'delta - {delta}')
+        # print(f'peer auction mission time - {mt}')
+        # print(f'delta - {delta}')
         routes, times, idxes = routes2, times2, idxes2  # commit and continue; donor/combos recomputed next round
     return routes, times, idxes
 
@@ -880,7 +882,7 @@ def simulate_1(save_results_to_csv=False):
     for file in scenario_files:
         scenario_num = file.split('.')[1]  # Extract scenario number from gdb.X.txt
         
-        if int(scenario_num) == 1:  # Process only scenario 1 for testing
+        if True:#int(scenario_num) == 1:  # Process only scenario 1 for testing
             print(f'Running GDB sscenario {scenario_num}')
             # print(f'Running GDB scenario {scenario_num}')
             
@@ -888,7 +890,7 @@ def simulate_1(save_results_to_csv=False):
             txt_path = os.path.join(txt_folder, file)
             G, required_edges, depot_nodes, vehicle_capacity, recharge_time, num_vehicles, failure_vehicles, vehicle_failure_times = parse_txt_file(txt_path)
             dist = dict(nx.all_pairs_dijkstra_path_length(G, weight='weight'))
-            print(f'required edges - {required_edges}')
+            # print(f'required edges - {required_edges}')
             # Load solution routes
             sol_path = os.path.join(sol_folder, f"{scenario_num}.npy")
             if not os.path.exists(sol_path):
@@ -941,10 +943,10 @@ def simulate_1(save_results_to_csv=False):
             
             start = time.time()
             print()
-            print(f'vehicle routes - {vehicle_routes}')
-            print(f'vehicle trip times - {vehicle_trip_times}')
-            print("Starting Mission")
-            print(f"mission time : {mission_time} time units.")
+            # print(f'vehicle routes - {vehicle_routes}')
+            # print(f'vehicle trip times - {vehicle_trip_times}')
+            # print("Starting Mission")
+            # print(f"mission time : {mission_time} time units.")
             # print(f'recharge time - {recharge_time} time units')
             # print(f"required edges to be traversed : {required_edges}")
             
@@ -978,13 +980,13 @@ def simulate_1(save_results_to_csv=False):
                     vehicle_routes[recent_failure_vehicle] = vehicle_routes[recent_failure_vehicle][:vehicle_trip_index[recent_failure_vehicle]]
                     vehicle_trip_times[recent_failure_vehicle] = vehicle_trip_times[recent_failure_vehicle][:vehicle_trip_index[recent_failure_vehicle]]
                     
-                    print('Removing failure trips from vehicle routes and trip times')
-                    print('Vehicle routes - ', vehicle_routes)
-                    print('Vehicle trip times - ', vehicle_trip_times)
-                    print(f'Vehicle trip indexes - {vehicle_trip_index}')
-                    print()
+                    # print('Removing failure trips from vehicle routes and trip times')
+                    # print('Vehicle routes - ', vehicle_routes)
+                    # print('Vehicle trip times - ', vehicle_trip_times)
+                    # print(f'Vehicle trip indexes - {vehicle_trip_index}')
+                    # print()
                     
-                    print('Beginning Auction ')
+                    # print('Beginning Auction ')
                     vehicle_routes, vehicle_trip_times = centralized_auction_optimized(G, t, failure_history, vehicle_routes, 
                                                                                          vehicle_trip_times, vehicle_trip_index, 
                                                                                          depot_nodes, failure_trips, vehicle_capacity, 
@@ -992,19 +994,19 @@ def simulate_1(save_results_to_csv=False):
                     num_function_calls += 1
                     detected_failed_vehicles = {}
                     
-                    print("centralized auction results")
-                    print(f"Updated vehicle routes  -  {vehicle_routes}")
-                    print(f"Updated Trip Times  -  {vehicle_trip_times}")
-                    print(f'After centralized auction Vehicle trip indexes - {vehicle_trip_index}')
-                    print(f'failure history - {failure_history}')
+                    # print("centralized auction results")
+                    # print(f"Updated vehicle routes  -  {vehicle_routes}")
+                    # print(f"Updated Trip Times  -  {vehicle_trip_times}")
+                    # print(f'After centralized auction Vehicle trip indexes - {vehicle_trip_index}')
+                    # print(f'failure history - {failure_history}')
                     mission_time = round(max([sum(vehicle_trip_times[k]) + (len(vehicle_trip_times[k]) - 1) * recharge_time +
                                              sum(idle_time[k].values()) for k in range(len(vehicle_routes))]), 1)
                     
-                    print(f"Mission time extended to {mission_time} time units.")
+                    # print(f"Mission time extended to {mission_time} time units.")
                     print()
 
                     print()
-                    print('###### Peer auction development ######')
+                    # print('###### Peer auction development ######')
                     # peer_auction(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index, depot_nodes, required_edges, dist, vehicle_capacity, recharge_time, failure_history)
                     vehicle_routes, vehicle_trip_times, _ = peer_auction_rounds(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index,
                         depot_nodes, required_edges, dist, vehicle_capacity, recharge_time, failure_history,
@@ -1045,7 +1047,7 @@ def simulate_1(save_results_to_csv=False):
             
             if save_results_to_csv:
                 df = pd.DataFrame(instanceData)
-                df.to_csv(f"{p}/results/instances_results_with_failure/centralized_auction_algorithm_gdb_new.csv", index=True)
+                df.to_csv(f"{p}/results/centralized_auction_algorithm_gdb_new.csv", index=True)
             # print()
             # print()
 
@@ -1132,8 +1134,8 @@ def simulate_2(save_results_to_csv=False):
             
             start = time.time()
             print()
-            print(f'vehicle routes - {vehicle_routes}')
-            print(f'vehicle trip times - {vehicle_trip_times}')
+            # print(f'vehicle routes - {vehicle_routes}')
+            # print(f'vehicle trip times - {vehicle_trip_times}')
             # print(f'depot Nodes - {depot_nodes}')
             # print("Starting Mission")
             # print(f"mission time : {mission_time} time units.")
@@ -1183,9 +1185,9 @@ def simulate_2(save_results_to_csv=False):
                     num_function_calls += 1
                     detected_failed_vehicles = {}
                     
-                    print("centralized auction results")
-                    print(f"Updated vehicle routes  -  {vehicle_routes}")
-                    print(f"Updated Trip Times  -  {vehicle_trip_times}")
+                    # print("centralized auction results")
+                    # print(f"Updated vehicle routes  -  {vehicle_routes}")
+                    # print(f"Updated Trip Times  -  {vehicle_trip_times}")
 
                     mission_time = round(max([sum(vehicle_trip_times[k]) + (len(vehicle_trip_times[k]) - 1) * recharge_time +
                                              sum(idle_time[k].values()) for k in range(len(vehicle_routes))]), 1)
@@ -1239,8 +1241,8 @@ def simulate_2(save_results_to_csv=False):
             # print()
 
 # EGLESE
-def simulate_3(save_results_to_csv=False):
-    p = '..'
+def simulate_3(save_results_to_csv=False, ins=None):
+    p = '.'
     
     instanceData = {
         "Instance Name": [], "Number of Nodes": [], "Number of Edges": [], "Number of Required Edges": [],
@@ -1250,7 +1252,7 @@ def simulate_3(save_results_to_csv=False):
         "% increase in maximum trip time": [], 'idle time': [], "Average time per function call": []
     }
 
-    txt_folder = f"{p}/dataset/new_failure_scenarios/eglese_failure_scenarios"
+    txt_folder = f"{p}/eglese_failure_scenarios"
     sol_folder = f"{p}/results/instances_results_without_failure/EGLESE_Failure_Scenarios_Results/results/eglese_failure_scenarios_solutions"
     
     # Get all scenario files
@@ -1260,13 +1262,13 @@ def simulate_3(save_results_to_csv=False):
         scenario_num = file.split('.')[1]  # Extract scenario number from eglese.X.txt
         
         print(f'Running EGLESE scenario {scenario_num}')
-        if True:#int(scenario_num) == 1:  # Process only scenario 1 for testing
+        if ins and int(scenario_num) in ins:  # Process only scenario 1 for testing
             # print(f'Running EGLESE scenario {scenario_num}')
             
             # Parse txt file
             txt_path = os.path.join(txt_folder, file)
             G, required_edges, depot_nodes, vehicle_capacity, recharge_time, num_vehicles, failure_vehicles, vehicle_failure_times = parse_txt_file(txt_path)
-            
+            dist = dict(nx.all_pairs_dijkstra_path_length(G, weight='weight'))
             # Load solution routes
             sol_path = os.path.join(sol_folder, f"{scenario_num}.npy")
             if not os.path.exists(sol_path):
@@ -1377,6 +1379,15 @@ def simulate_3(save_results_to_csv=False):
                                              sum(idle_time[k].values()) for k in range(len(vehicle_routes))]), 1)
                     # print(f"Mission time extended to {mission_time} time units.")
                     # print()
+
+                    vehicle_routes, vehicle_trip_times, _ = peer_auction_rounds(G, vehicle_routes, vehicle_trip_times, vehicle_trip_index,
+                        depot_nodes, required_edges, dist, vehicle_capacity, recharge_time, failure_history,
+                        max_rounds=5, eps=1e-6)
+                    
+                    mission_time = round(max([sum(vehicle_trip_times[k]) + (len(vehicle_trip_times[k]) - 1) * recharge_time +
+                                             sum(idle_time[k].values()) for k in range(len(vehicle_routes))]), 1)
+                    print(f'mission time - {mission_time}')
+                    print()
                     
                 t += 0.1
                 t = round(t, 1)
@@ -1405,11 +1416,14 @@ def simulate_3(save_results_to_csv=False):
             
             if save_results_to_csv:
                 df = pd.DataFrame(instanceData)
-                df.to_csv(p + '/results/centralized_auction_algorithm_eglese_new.csv', index=True)
+                df.to_csv(p + f'/results/centralized_auction_algorithm_eglese_new_{min(ins)}_{max(ins)}.csv', index=True)
                 # print()
                 # print()
 
 if __name__ == "__main__":
-    # simulate_1(save_results_to_csv=False)
-    simulate_2(save_results_to_csv=True)
-    # simulate_3(save_results_to_csv=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("numbers", nargs="+", type=int)
+    args = parser.parse_args()
+    # simulate_1(save_results_to_csv=True)
+    # simulate_2(save_results_to_csv=True)
+    simulate_3(save_results_to_csv=True, ins = args.numbers)
